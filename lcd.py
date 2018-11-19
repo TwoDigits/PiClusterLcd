@@ -31,7 +31,7 @@ def update_ips():
 def update_memory():
     mem_free_master = psutil.virtual_memory().free / 1024 / 1024
     mem_used_master = psutil.virtual_memory().used / 1024 / 1024
-    return "Mem Free : " + mem_free_master + " Mem Used : " + mem_used_master
+    return "Mem Free : {0}".format(mem_free_master) + " Mem Used : {0}".format(mem_used_master)
 
 
 # TODO : implement marquee if len is more then 20 chars
