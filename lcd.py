@@ -1,5 +1,6 @@
 import psutil
 import lcddriver
+from time import sleep
 
 lcd = lcddriver.Lcd()
 lcd.lcd_clear()
@@ -31,7 +32,7 @@ def update_ips():
 def update_memory():
     mem_free_master = psutil.virtual_memory().free / 1024 / 1024
     mem_used_master = psutil.virtual_memory().used / 1024 / 1024
-    return "Mem Free : {0}".format(mem_free_master) + " Mem Used : {0}".format(mem_used_master)
+    return "Mem Free : {:10.0f} MB".format(mem_free_master) + " Mem Used : {:10.0f} MB".format(mem_used_master)
 
 
 # TODO : implement marquee if len is more then 20 chars
@@ -40,13 +41,13 @@ def update_display():
     line2 = update_ips()
     line3 = update_memory()
     line4 = "Nodes"  # TODO : implement node info from kubernetes
-    lcd.lcd_display_string(line1, 1)
-    lcd.lcd_display_string(line2, 2)
-    lcd.lcd_display_string(line3, 3)
-    lcd.lcd_display_string(line4, 4)
+    lcd.lcd_display_string(line1[:10], 1)
+    lcd.lcd_display_string(line2[:10], 2)
+    lcd.lcd_display_string(line3[:10], 3)
+    lcd.lcd_display_string(line4[:10], 4)
 
 
-# TODO : do it in a loop with 250ms timeout?
-update_display()
-
+while True:
+    update_display()
+    sleep(0.25)
 
