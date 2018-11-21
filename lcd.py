@@ -1,5 +1,6 @@
 import psutil
 import lcddriver
+import subprocess
 from time import sleep
 
 lcd = lcddriver.Lcd()
@@ -14,6 +15,9 @@ lcd.lcd_clear()
 # Line 4 : Nodes + (CPU & Mem of Nodes)      #
 ##############################################
 
+line_pos = [0 , 0 , 0 , 0]
+
+
 
 def update_ips():
     # configure the interfaces which should be shown in line2
@@ -26,25 +30,40 @@ def update_ips():
             for addr in psutil.net_if_addrs()[key]:
                 if addr.family == 2:
                     ips = ips + key + " : " + addr.address + "    "
+            if key == 'wlan0':
+                p = subprocess.Popen('iwconfig wlan0|grep ESSID|awk \'{print $4;}\'', shell = True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                for line in p.stdout.readlines():
+                    ips = ips+"{0}".format(line)[2:-3] + "    "
+                retval = p.wait()
     return ips
 
 
 def update_memory():
     mem_free_master = psutil.virtual_memory().free / 1024 / 1024
     mem_used_master = psutil.virtual_memory().used / 1024 / 1024
-    return "Mem Free : {:10.0f} MB".format(mem_free_master) + " Mem Used : {:10.0f} MB".format(mem_used_master)
+    return "Mem Free :{:4.0f} MB ".format(mem_free_master) + " Used : {:4.0f} MB".format(mem_used_master)
 
 
-# TODO : implement marquee if len is more then 20 chars
 def update_display():
+    global line_pos
+
     line1 = "     TwoDigits"
     line2 = update_ips()
     line3 = update_memory()
-    line4 = "Nodes"  # TODO : implement node info from kubernetes
-    lcd.lcd_display_string(line1[:10], 1)
-    lcd.lcd_display_string(line2[:10], 2)
-    lcd.lcd_display_string(line3[:10], 3)
-    lcd.lcd_display_string(line4[:10], 4)
+    line4 = "Nodes"  # TODO : implement node info from kubernetes, process json from "kubectl get nodes -o=json" command
+    
+    lines = [line1 , line2 , line3 , line4]
+    
+    for i in [0 , 1 , 2 , 3]:
+        line_len = len(lines[i])
+        if line_len <= 20:
+            lcd.lcd_display_string(lines[i], i+1)
+        else:
+            lines[i] = lines[i] + " " + lines[i]
+            lcd.lcd_display_string(lines[i][line_pos[i]:20+line_pos[i]], i+1)
+            line_pos[i] = line_pos[i] + 1
+            if line_pos[i] > line_len:
+                line_pos[i] = 0
 
 
 while True:
