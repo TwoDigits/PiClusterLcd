@@ -19,6 +19,27 @@ line_pos = [0 , 0 , 0 , 0]
 
 
 
+def update_revport():
+    status = ""
+    p = subprocess.Popen('/etc/init.d/reverseport status', shell = True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in p.stdout.readlines():
+        status = status+"{0}".format(line)[2:-3]
+    retval = p.wait()
+    return "Reverseport : {0}".format(status)
+
+def update_nodes():
+    pods_running = ""
+    pods_total = ""
+    p = subprocess.Popen('kubectl get pods|grep "Running"|wc -l', shell = True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in p.stdout.readlines():
+        pods_running = line
+    retval = p.wait()
+    p = subprocess.Popen('kubectl get pods|wc -l', shell = True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in p.stdout.readlines():
+        pods_total = line
+    retval = p.wait()
+    return "Pods Running : {0}".format(pods_running) + " Total : {0}".format(pods_total)
+
 def update_ips():
     # configure the interfaces which should be shown in line2
     interfaces = ['wlan0', 'enxb827ebe2c89e']
@@ -44,13 +65,14 @@ def update_memory():
     return "Mem Free :{:4.0f} MB ".format(mem_free_master) + " Used : {:4.0f} MB".format(mem_used_master)
 
 
+
 def update_display():
     global line_pos
 
     line1 = "     TwoDigits"
     line2 = update_ips()
     line3 = update_memory()
-    line4 = "Nodes"  # TODO : implement node info from kubernetes, process json from "kubectl get nodes -o=json" command
+    line4 = update_revport() # TODO call : update_nodes() 
     
     lines = [line1 , line2 , line3 , line4]
     
