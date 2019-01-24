@@ -16,8 +16,11 @@ lcd.lcd_clear()
 ##############################################
 
 line_pos = [0 , 0 , 0 , 0]
-
-
+line_data = ["", "", "", ""] 
+update_counter = [9999, 9999, 9999, 9999]
+# How many cycles should be skipped before the next update?
+update_limit = [5, 1000, 10, 100]
+cycle_len = 0.25
 
 def update_revport():
     status = ""
@@ -68,27 +71,35 @@ def update_memory():
 
 def update_display():
     global line_pos
+    global line_data
+    global update_counter
+    global update_limit
 
-    line1 = "     TwoDigits"
-    line2 = update_ips()
-    line3 = update_memory()
-    line4 = update_revport() # TODO call : update_nodes() 
-    
-    lines = [line1 , line2 , line3 , line4]
+    for i in [1 , 2 , 3]:
+        update_counter[i]=update_counter[i]+1;
+        if update_counter[i] >= update_limit[i]:
+            update_counter[i] = 0;
+            if i==1:
+                line_data[i] = update_ips();
+            if i==2:
+                line_data[i] = update_memory();
+            if i==3:
+                line_data[i] = update_revport(); 
+    line_data[0] = "     TwoDigits"
     
     for i in [0 , 1 , 2 , 3]:
-        line_len = len(lines[i])
+        line_len = len(line_data[i])
         if line_len <= 20:
-            lcd.lcd_display_string(lines[i], i+1)
+            lcd.lcd_display_string(line_data[i], i+1)
         else:
-            lines[i] = lines[i] + " " + lines[i]
-            lcd.lcd_display_string(lines[i][line_pos[i]:20+line_pos[i]], i+1)
+            line = line_data[i] + " " + line_data[i]
+            lcd.lcd_display_string(line[line_pos[i]:20+line_pos[i]], i+1)
             line_pos[i] = line_pos[i] + 1
             if line_pos[i] > line_len:
                 line_pos[i] = 0
 
 
 while True:
-    update_display()
-    sleep(0.25)
+    update_display();
+    sleep(cycle_len);
 
